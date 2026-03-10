@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StoryVerse | Premium Literary Portal</title>
+    <!-- Favicon -->
+    <link rel="icon" href="https://drive.google.com/thumbnail?id=18kNB9Jh9PgWGexXURsCj-ksX21LPT7Ox&sz=w1000" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;600&display=swap');
+
+        :root {
+            --accent: #d4af37;
+            --bg-dark: #0f172a;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+
+        .serif { font-family: 'Playfair Display', serif; }
+
+        .hero-bg {
+            background: linear-gradient(rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.9)), 
+                        url('https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&q=80&w=2000');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
+        /* Reader Background Style */
+        .reader-bg {
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            position: relative;
+        }
+
+        .reader-overlay {
+            background: linear-gradient(to bottom, rgba(15, 23, 42, 0.5), rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.95));
+            min-height: 100%;
+            width: 100%;
+        }
+
+        .story-card {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .story-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+            border-color: var(--accent);
+        }
+
+        .category-pill {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .category-pill:hover, .category-pill.active {
+            background-color: var(--accent);
+            color: #000;
+            transform: scale(1.05);
+        }
+
+        .hidden-section { 
+            display: none; 
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        
+        .reveal-section {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+        #backToTop {
+            transition: all 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+        }
+        #backToTop.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Reading text optimization */
+        .reading-container {
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            text-align: justify;
+        }
+        #reader-content h1 {
+           position: relative;
+            display: inline-block;
+            padding-bottom: 10px;
+        }
+
+        #reader-content h1::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 75%;
+            height: 4px;
+            background: var(--accent);
+            border-radius: 3px;
+        }
+        .light-mode{
+            background: rgba(255,255,255,0.95);
+            color:#111;
+        }
+
+        .light-mode .prose{
+            color:#111;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Back to Top Button -->
+    <button id="backToTop" onclick="scrollToTop()" class="fixed bottom-20 right-8 z-[60] bg-amber-500 text-slate-900 w-12 h-12 rounded-full shadow-2xl flex items-center justify-center hover:bg-amber-400 hover:-translate-y-1 active:scale-95">
+        <i class="fas fa-chevron-up"></i>
+    </button>
+
+    <!-- Navigation -->
+    <nav id="main-nav" class="fixed w-full z-50 bg-slate-900/90 backdrop-blur-md border-b border-white/10 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <div class="flex items-center cursor-pointer group" onclick="location.reload()">
+                    <div class="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center mr-3 transition-transform group-hover:rotate-12">
+                        <i class="fas fa-book-open text-slate-900 text-xl"></i>
+                    </div>
+                    <span class="text-2xl font-bold tracking-tighter serif text-amber-500">STORY<span class="text-white">&nbsp; VERSE</span></span>
+                </div>
+
+                <div class="hidden md:flex items-center space-x-6">
+
+    <!-- Navbar Search (hidden initially) -->
+    <div id="navSearchContainer" class="hidden transition-all duration-300">
+        <input 
+            type="text"
+            id="navSearch"
+            placeholder="Search stories..."
+            onkeyup="handleSearch(this.value)"
+            class="bg-white/10 border border-white/20 px-4 py-2 rounded-lg text-sm focus:outline-none focus:border-amber-500 text-white"
+        >
+    </div>
+                    <button onclick="location.reload()" class="hover:text-amber-500 transition-colors duration-200 text-white">Home</button>
+                    <button onclick="scrollToSection('about')" class="hover:text-amber-500 transition-colors duration-200 text-white">About</button>
+                    <div class="relative group">
+                        <button class="hover:text-amber-500 transition-colors duration-200 flex items-center text-white">
+                            Library <i class="fas fa-chevron-down ml-2 text-xs transition-transform group-hover:rotate-180"></i>
+                        </button>
+                        <div class="absolute top-full right-0 mt-2 w-48 bg-slate-800 border border-white/10 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                            <a href="#" onclick="filterMainCat('Novels')" class="block px-4 py-3 text-white hover:bg-slate-700 rounded-t-xl transition-colors">Novels</a>
+                            <a href="#" onclick="filterMainCat('Short Stories')" class="block px-4 py-3 text-white hover:bg-slate-700 rounded-b-xl transition-colors">Short Stories</a>
+                        </div>
+                    </div>
+                    <button onclick="scrollToSection('submit')" class="bg-amber-500 text-slate-900 px-5 py-2 rounded-full font-bold hover:bg-amber-400 hover:shadow-lg hover:shadow-amber-500/20 active:scale-95 transition-all duration-200">Submit Story</button>
+                </div>
+
+                <div class="md:hidden text-2xl text-white cursor-pointer" onclick="toggleMenu()">
+                    <i class="fas fa-bars"></i>
+                </div>
+        </div>
+        <div id="mobileMenu" class="md:hidden bg-slate-900 border-t border-white/10 overflow-hidden max-h-0 transition-all duration-500">
+
+            <button onclick="closeMenu(); location.reload()" class="block w-full text-left px-6 py-4 hover:bg-slate-800">Home</button>
+
+            <button onclick="closeMenu(); scrollToSection('about')" class="block w-full text-left px-6 py-4 hover:bg-slate-800">About</button>
+
+            <button onclick="closeMenu(); filterMainCat('Novels')" class="block w-full text-left px-6 py-4 hover:bg-slate-800">Novels</button>
+
+            <button onclick="closeMenu(); filterMainCat('Short Stories')" class="block w-full text-left px-6 py-4 hover:bg-slate-800">Short Stories</button>
+
+            <button onclick="closeMenu(); scrollToSection('submit')" class="block w-full text-left px-6 py-4 hover:bg-slate-800">Submit Story</button>
+
+</div>
+    </nav>
+
+    <!-- Main Content Wrapper -->
+    <main id="main-content">
+        <!-- Hero Section -->
+        <section id="home-section" class="hero-bg min-h-screen flex items-center justify-center text-center px-4 pt-20">
+            <div class="max-w-4xl reveal-section">
+                <h1 class="text-4xl sm:text-5xl md:text-7xl font-bold serif mb-6 leading-tight text-white">Every Voice Has a <span class="text-amber-500 italic text-6xl md:text-8xl">Story</span></h1>
+                <p class="text-lg md:text-xl text-slate-300 mb-10 max-w-2xl mx-auto">Explore worlds crafted by independent writers. From sprawling sci-fi epics to bite-sized urban fantasies.</p>
+                
+                <div class="relative max-w-2xl mx-auto mb-12">
+                    <input type="text"id="mainSearch"onfocus="scrollToSection('catalog-section')"onkeyup="handleSearch(this.value)"placeholder="Search by title, author, or genre..."class="w-full bg-white/10 backdrop-blur-md border border-white/20 py-5 px-6 rounded-2xl text-lg focus:outline-none focus:border-amber-500 focus:bg-white/20 transition-all text-white">
+                    <div class="absolute right-4 top-4 text-amber-500 text-xl">
+                        <i class="fas fa-search"></i>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap justify-center gap-4">
+                    <button onclick="filterMainCat('Novels')" class="px-8 py-3 bg-white/5 border border-white/10 rounded-xl text-white hover:border-amber-500 hover:bg-white/10 transition-all duration-300">Explore Novels</button>
+                    <button onclick="filterMainCat('Short Stories')" class="px-8 py-3 bg-white/5 border border-white/10 rounded-xl text-white hover:border-amber-500 hover:bg-white/10 transition-all duration-300">Short Stories</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Catalog Section -->
+        <section id="catalog-section" class="py-24 px-4 bg-slate-900">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6">
+                    <div class="reveal-section">
+                        <h2 id="catalog-title" class="text-4xl font-bold serif mb-2 text-white"><u aria-setsize="5px">The Library</u></h2>
+                        <p class="text-slate-400" id="catalog-subtitle"><i>Discover our collection of community stories</i></p>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-2 reveal-section" id="sub-filters" style="animation-delay: 0.1s">
+                        <button onclick="filterSubCat('All')" class="category-pill active px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white">All Genres</button>
+                        <button onclick="filterSubCat('Sci-Fi')" class="category-pill px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white">Sci-Fi</button>
+                        <button onclick="filterSubCat('Fantasy')" class="category-pill px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white">Fantasy</button>
+                        <button onclick="filterSubCat('Adventure')" class="category-pill px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white">Adventure</button>
+                        <button onclick="filterSubCat('Mystery')" class="category-pill px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white">Mystery</button>
+                        <button onclick="filterSubCat('Horror')" class="category-pill px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white">Horror</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="story-grid">
+</div>
+
+<!-- PAGINATION -->
+<div id="pagination" class="flex justify-center gap-3 mt-12"></div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+            <section id="about" class="py-24 px-4 bg-slate-900 border-t border-white/10">
+                <div class="max-w-6xl mx-auto">
+
+                <div class="text-center mb-16 reveal-section">
+                    <h2 class="text-4xl font-bold serif text-white mb-4">About StoryVerse</h2>
+                    <p class="text-slate-400 max-w-2xl mx-auto">
+                     StoryVerse is a digital platform built to showcase creative stories written by independent writers.
+                        Our goal is to provide a place where imagination, creativity, and storytelling come together.
+                    </p>
+                </div>
+
+        <!-- Creator -->
+            <div class="mb-16 reveal-section">
+                <h3 class="text-2xl font-bold serif text-amber-500 mb-6 text-center">Website Creator</h3>
+
+                <div class="max-w-md mx-auto story-card rounded-2xl p-6 text-center">
+                    <div class="w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden border-2 border-amber-500">
+                        <img 
+                            src="https://drive.google.com/thumbnail?id=1d-shKTIDRMzChWVnaVKNS-HAjIYf-1p0&sz=w1000"
+                            alt="Dinuga Chamadith"
+                            class="w-full h-full object-cover">
+                    </div>
+
+                    <h4 class="text-xl font-bold text-white">Dinuga Chamadith</h4>
+                    <p class="text-slate-400 text-sm mt-2">
+                        Creator and developer of StoryVerse. Designed and built the platform to promote
+                        independent storytelling and creative writing.
+                    </p>
+                </div>
+            </div>
+
+        <!-- Authors -->
+            <div class="reveal-section">
+                <h3 class="text-2xl font-bold serif text-amber-500 mb-10 text-center">Story Authors</h3>
+
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+                    <div class="story-card rounded-2xl p-6 text-center">
+                        <i class="fas fa-pen-nib text-3xl text-amber-500 mb-4"></i>
+                        <h4 class="text-lg font-bold text-white">Kuravi Thunuwara</h4>
+                        <p class="text-slate-400 text-sm mt-2">
+                            Author of multiple adventure, mystery and science fiction short stories featured on StoryVerse.
+                        </p>
+                    </div>
+
+                <div class="story-card rounded-2xl p-6 text-center">
+                    <i class="fas fa-ghost text-3xl text-amber-500 mb-4"></i>
+                    <h4 class="text-lg font-bold text-white">Sasiru Dulmith</h4>
+                    <p class="text-slate-400 text-sm mt-2">
+                        An editor and creative partner dedicated to refining our story, 
+                        perfecting our grammar, and sharpening our narrative’s emotional impact.
+                    </p>
+                </div>
+
+                <div class="story-card rounded-2xl p-6 text-center">
+                    <i class="fas fa-gear text-3xl text-amber-500 mb-4"></i>
+                    <h4 class="text-lg font-bold text-white">Nisira Nimsara</h4>
+                    <p class="text-slate-400 text-sm mt-2">
+                        An editor and creative partner dedicated to refining our story, 
+                        perfecting our grammar, and sharpening our narrative’s emotional impact.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        </div>
+    </section>
+
+        <!-- Submit Section -->
+        <section id="submit" class="py-24 px-4 bg-slate-950 border-t border-white/5">
+            <div class="max-w-4xl mx-auto text-center reveal-section">
+                <h2 class="text-4xl font-bold serif mb-6 text-white">Want to Share Your Story?</h2>
+                <p class="text-slate-400 mb-10 text-lg">Send us your manuscript! We accept submissions through WhatsApp or Email for review.</p>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <a href="https://wa.me/+94702148766" target="_blank" class="flex items-center justify-center p-8 bg-green-600/10 border border-green-500/20 rounded-2xl hover:bg-green-600/20 transition-all duration-300 group">
+                        <div class="text-center">
+                            <i class="fab fa-whatsapp text-4xl text-green-500 mb-4 group-hover:scale-110 group-hover:rotate-12 transition-transform duration-300"></i>
+                            <h3 class="text-xl font-bold text-white">WhatsApp Us</h3>
+                            <p class="text-sm text-slate-400">Quick response</p>
+                        </div>
+                    </a>
+                    <a href="mailto:Dinugachamadith2009@gmail.com" class="flex items-center justify-center p-8 bg-blue-600/10 border border-blue-500/20 rounded-2xl hover:bg-blue-600/20 transition-all duration-300 group">
+                        <div class="text-center">
+                            <i class="far fa-envelope text-4xl text-blue-500 mb-4 group-hover:scale-110 group-hover:-rotate-12 transition-transform duration-300"></i>
+                            <h3 class="text-xl font-bold text-white">Email Submission</h3>
+                            <p class="text-sm text-slate-400">Formal review</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Immersive Story Reader View -->
+    <div id="reader-view" class="fixed inset-0 z-[100] reader-bg overflow-y-auto hidden-section transition-all duration-500">
+        <div class="reader-overlay">
+            <div class="max-w-3xl mx-auto px-6 py-20 reading-container">
+
+                <button onclick="toggleReadingMode()" class="fixed top-8 right-8 bg-slate-800 text-white px-4 py-2 rounded-full">
+                    <i class="fas fa-moon"></i>
+                </button>
+
+                <button onclick="closeReader()" class="fixed top-8 left-8 z-[110] text-slate-400 hover:text-white flex items-center gap-2 bg-slate-800/80 px-4 py-2 rounded-full backdrop-blur-md transition-all shadow-xl">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                
+                <div id="reader-content" class="opacity-0 translate-y-4 transition-all duration-700">
+                    <!-- Content injected here -->
+                </div>
+
+                <div class="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
+
+                    <button id="downloadBtn" class="bg-amber-500 text-slate-900 px-6 py-3 rounded-xl font-bold hover:bg-amber-400 hover:shadow-lg transition-all active:scale-95">
+                        <i class="fas fa-download mr-2"></i> Download as .TXT
+                    </button>
+
+                    <div class="flex items-center gap-6">
+
+                        <div class="flex gap-4">
+                            <div class="text-slate-500 italic center">End of Story</div>
+                        </div>
+
+                        <button onclick="closeReader()" class="px-6 py-3 bg-slate-800 rounded-xl hover:bg-slate-700">
+                                    <i class="fas fa-arrow-left"></i> Back to Library
+                                </button>
+
+                        <button onclick="nextStory()" class="px-6 py-3 bg-amber-500 text-black rounded-xl hover:bg-amber-400">
+                                    Next Story <i class="fas fa-arrow-right"></i>
+                                </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- World Class Footer -->
+    <footer class="bg-slate-950 pt-20 pb-10 px-6 border-t border-white/10">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16 ">
+                <div class="space-y-6">
+                    <div class="flex items-center cursor-pointer group" onclick="showHome()">
+                        <div class="w-8 h-8 bg-amber-500 rounded flex items-center justify-center mr-3 group-hover:rotate-6 transition-transform">
+                            <i class="fas fa-book-open text-slate-900 text-sm"></i>
+                        </div>
+                        <span class="text-xl font-bold tracking-tighter serif text-amber-500">STORY<span class="text-white">VERSE</span></span>
+                    </div>
+                    <p class="text-slate-400 leading-relaxed text-sm">
+                        Curating the finest digital literature from independent voices worldwide. Join our community of dreamers and storytellers.
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="https://www.instagram.com/itz_ldc?utm_source=qr&igsh=dzl2bWY4cHBoYXd6" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-amber-500 hover:text-slate-900 transition-all duration-300 text-white">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-amber-500 hover:text-slate-900 transition-all duration-300 text-white">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-amber-500 hover:text-slate-900 transition-all duration-300 text-white">
+                            <i class="fab fa-medium-m"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="lg:col-start-3">
+                    <h4 class="text-white font-bold mb-6 text-lg"><u>Explore</u></h4>
+                    <ul class="space-y-4 text-slate-400">
+                        <li><a href="javascript:void(0)" onclick="location.reload()" class="hover:text-amber-500 transition-colors">Home</a></li>
+                        <li><a href="javascript:void(0)" onclick="filterMainCat('Novels')" class="hover:text-amber-500 transition-colors">Novels</a></li>
+                        <li><a href="javascript:void(0)" onclick="filterMainCat('Short Stories')" class="hover:text-amber-500 transition-colors">Short Stories</a></li>
+                        <li><a href="javascript:void(0)" onclick="scrollToSection('submit')" class="hover:text-amber-500 transition-colors">Writer Submissions</a></li>
+                    </ul>
+                </div>
+
+                <div class="lg:col-start-4">
+                    <h4 class="text-white font-bold mb-6 text-lg text-white"><u>Legal</u></h4>
+                    <ul class="space-y-4 text-slate-400">
+                        <li><a href="#" class="hover:text-amber-500 transition-colors">Privacy Policy</a></li>
+                        <li><a href="#" class="hover:text-amber-500 transition-colors">Terms of Service</a></li>
+                        <li><a href="#" class="hover:text-amber-500 transition-colors">Copyright Info</a></li>
+                        <li><a href="#" class="hover:text-amber-500 transition-colors">Cookie Policy</a></li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <div class="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-slate-500 text-sm italic serif text-white">Crafting digital experiences for modern readers.</p>
+                <p class="text-slate-500 text-sm text-white">&copy; 2026 StoryVerse Media Group. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const stories = [
+            {
+                id: 1,
+                title: "The Mysterious Touch",
+                author: "Kuravi Thunuwara",
+                mainCat: "Short Stories",
+                subCat: "Mystery",
+                excerpt: "Lost in the Dark Forest.",
+                content: "One day, Jane was walking through a rough forest which was little distant away from her home. She suddenly heard an unusual voice from the trees. She got scared and turned back to see whether there was anything. She kept her bag near a root of a tree which exposed on to the ground and started to check if someone was there. \n\nEven though she searched for someone for a while, she could not find anyone. Suddenly, someone tapped her in the back. She got further scared and looked back quickly but nobody was there. To her surprise, her bag was missing. She lost her phone, GPS, food and water which was in her bag. She shocked a lot. Dark was about to cover the forest. It was near 6.00 p.m. She was shivering and the weather was very cold. There was nothing to do but to spend the night under a tree knowing the danger of the forest. She thought spending the night in the forest would be safe rather than trying to go home without any GPS. \n\nShe prepared a fire by using few sticks and rocks. Suddenly a big door appeared next to her and a hand came out from the other side and dragged her towards it. She woke up in the middle of a field where the forest was gone. Then she heard 'You will never know who I am.' She was about to run when she found her bag next to her. She took it and ran fast as she could. She saw her home which was few meters away. She ran faster. Finally she was home. Her mother stepped out from the house and asked many questions such as, “Where have you been? Why were you running? Have you seen a ghost?” Jane was silent and didn’t reply for her mother’s questions. She was tired and asked for a glass of water instead. Finally she was free and safe but however, she never got to know what was exactly happened to her.",
+                image: "https://drive.google.com/thumbnail?id=1RRK9s4IRFw-5tMdGX_H4gBSm6OQxp84v&sz=w1000"
+            },
+            {
+                id: 2,
+                title: "The Hidden Treasure",
+                author: "Kuravi Thunuwara",
+                mainCat: "Short Stories",
+                subCat: "Adventure",
+                excerpt: "The treasure hidden in an island.",
+                content: "On a peaceful Saturday, John went to the library to read some books about chemistry. He was near the 12th shelf when he saw a paper that looked like a map. He grabbed it and yes, it was a map. He read the map carefully. There was a path indicated by dotted lines. At the center of the map there was a place marked by 'X' sign. He thought this would be a map for a hidden treasure. He took out his phone and took a photograph carefully. \n\nJohn wanted to go to that place and find if there was a treasure. So the next day, he decided to go and find it with his friend Peter. They walked according to the map and went through forests and a lot of unknown roads. Surprisingly, after 30 minutes of walking, they had come to the coast. The map said about an island which is oval-shaped. When they looked around, they saw an island which was similar to the description given in the map. \n\nJohn and Peter started to find a boat to go to the island and luckily, they found a place which rent boats. They went there and took a boat and sailed towards the oval-shaped island. They arrived at the island finally and tied the boat to a tree nearby. \n\nJohn and peter started walking in order to find the place mentioned in the map. They walked and walked and arrived at the middle of the island. According to the map, the sign should be there. They started to find the “X” and finally found it written on a tree. \n\nTwo friends started to dig the ground as they are too curious to find if there was a treasure. They dug for 40 minutes around the tree but they could not find anything. Suddenly, when Peter hit the ground with his hoe, they heard a banging sound. It was a box. They took it up to the ground and opened it. They were amazed from what they saw. It was a box full of gold. They were very happy and took the gold away from the island to the town. They sold it to a gold shop and became the richest in their village.",
+                image: "https://drive.google.com/thumbnail?id=19jpU6ncsJa62s8maGRAenvq5pWhnlnQN&sz=w1000"
+            },
+            {
+                id: 3,
+                title: "Attack From The Space",
+                author: "Kuravi Thunuwara",
+                mainCat: "Short Stories",
+                subCat: "Fantasy",
+                excerpt: "A sudden Alien Attack from the space.",
+                content: "Once upon a time, there was a small village with a minimum population about 30 people. They were descended from a traditional group of people who learnt and knew about Dark Arts. All those people who lived there had the ability to control the time, read minds, and changing the size of anything. \n\nOne day, everybody in the town lost all the superpowers that they had except for one young man called Peter. He realized that he was the only one having the superpowers. This is when the village met with a paranormal incident. Suddenly, a flying disc like object covered the whole sky of the village. It seemed like a high-tech fling machine from outter-space. It flew over the village and stopped over the forest near to the village. \n\nSome unusual creatures came down from it and started comming towards the village. Not a while ago, those creatures came from outer space, started firing laser guns and high-tech bombs which destroyed the village’s forest within few minutes. There were only the sound of screaming and burning. People were scared and couldn’t do anything without their powers but to run and take cover. \n\nSuddenly everything stopped. There were no screaming, no running, everything were stopped. Peter who had the powers quickly froze the time and stopped the weapons and aliens temporarily. Then he made the weapons, aliens and their fling space ship disappear by using his superpower. After a few seconds, all of those disappeared. Everything became normal. People were relived and happy as Peter took care about the alien attack. Peter was also happy to save the world. \n\nThere was a question raising from the people. It was how Peter got the powers while others lost their powers. It was later discovered that Peter was coming from the original blood line of those traditional people. Few days later, the man found a way to re-establish the powers within the villagers. Everyone respected him as he was the only one who was coming from the ancient ancestors who found the dark arts that they use at the present",
+                image: "https://drive.google.com/thumbnail?id=1XetJ062sCIjpq7ZmsdjgCSvFwyOnpCP5&sz=w1000"
+            },
+            {
+                id: 4,
+                title: "The Under-water Mystery",
+                author: "Kuravi Thunuwara",
+                mainCat: "Short Stories",
+                subCat: "Adventure",
+                excerpt: "Treasure hidden under the ocean among the old ships.",
+                content: "Once upon a time a group divers, who want to explore under ocean, had a submarine and decided to explore the deep sea on a peaceful day. They left their houses and met at the port to get in their submarine. Then they left the port and went deeper and deeper into the ocean in hope for finding secrets hidden under the sea. \n\nThey explored the sea floor. There was a lot of seaweed. But what they found the most was sea litter, Plastic bottles slippers and all that. They suddenly found some shipwrecks that looked very old indeed. A diver stayed in the submarine in case of an emergency. Remaining four divers went towards the ships, and they saw that all the ships only had rusted metal parts. \n\nThey searched inside the ships and found a special door inside one. It was very hard to open but somehow they finally managed to open it was a bid room behind the door. They went inside the room and found a box. They looked carefully and decided to open it. Then they opened it and they all were amazed by what they saw. The box was full of a lot of gold inside it. They quickly grabbed the box to bring it to their submarine. \n\nWhile they were swimming towards their submarine, they saw another submarine next to their one. A group came out of that submarine, and they looked like thieves. They were coming to steal the gold. The group with the gold quickly hidden behind the seaweed. The thieves missed them and went towards the old ship-wreck. Then the explorers swam quickly to the submarine with their loot. \n\nThen they came to the port and decided to inform the relevant authorities about the ships and the treasure box which they currently have. They informed the local museum, and they repliedsaying that they will take care of the treasure. The team of divers were appreciated by the museum and the mayor after bringing the treasure box and information on those old ships. They were also pleased with their exploring's under the deep ocean.",
+                image: "https://drive.google.com/thumbnail?id=1_cJM0oRNEJJQOrLJDyar1zxyeHHItpSh&sz=w1000"
+            },
+            {
+                id: 5,
+                title: "A Trip To The Space",
+                author: "Kuravi Thunuwara",
+                mainCat: "Short Stories",
+                subCat: "Fantasy",
+                excerpt: "Accidenty found life out from the Earth.",
+                content: "Sam was part of a crew that was sent on a mission to the outer space. He went with his two friends, Jack and Paul. They left the earth in the morning by a newly made white colour spaceship. They were going very fast to the upper space. They firstly landed on Mars. Then they collected some soil from and everything was normal there.\n\nBut things started to happen when they were going to their final destination, which was a newly identified planet “Proxima Centauri B”. After resting for some time on Mars, they started their journey to the new planet but along the way the main engine started malfunctioning. The captain turned the second engine on to keep moving. But thereafter the steering system started malfunctioning. The space craft tilted to a side and crashed into a asteroid. The lights flickered and warning alarms were activated. All the engines stopped automatically. With about 2000 km to their destination these space travellers were stranded. They desperately tried to contact the Earth, but no success was achieved. The radio was broken.\n\nThey were going towards to that planet. The speed of their spaceship was reducing gradually. They could not understand what would happen in the next moment. They finally arrived at the planet and landed safely on it. Their ship was highly damaged due to the crash with that asteroid and they were thinking of a way to fix their spaceship. Suddenly a strange creature came toward them. It was an alien. The crew got very much scared.\n\nHowever the alien teleported and came closer to them. Their hearts almost skipped a beat at that moment. The alien said that he was not harmful and said that he can fix their spaceship. The crew agreed on it and the alien fixed it within a blink of an eye. The alien gave them some useful things for the crew's research. Then the crew got back into their spaceship and arrived back safely to the Earth. Their discover proved that we are not alone in the universe.",
+                image: "https://drive.google.com/thumbnail?id=1hMBjnmSf3p7eUMsRHOaKd93QXpy42XJD&sz=w1000"
+            },
+            {
+                id: 6,
+                title: "Echoes of Kepler - 186F",
+                author: "Kuravi Thunuwara",
+                mainCat: "Short Stories",
+                subCat: "Sci-Fi",
+                excerpt: "Mission far from Earth.",
+                content: "It was the year 280 Commander Sarah Vance and her Crew reached the planet Kepler-186F after a long journy of 675 million KM from Earth. The planet's atmosphere is too much denser. Due to that, the Sarah's spaceship made a terrifing noice because of the atmospheric pressure. Sarah carefully controlled the spaceship and managed to land on the planet.\n\n After a while, the spaceship's sensors detected a  signal. That was very unusual as there cannot be any signal on the plannet Kepler-186F because Sarah and her crew were the first humans to land on this planet. Sarah quickly called her team, 'Hey, come quickly. Our sensors have detected a signal.'\n\n The crew immediately came to the main control room asking 'What's the signal about?' With the help of the team, Sarah found that this signal is more than 200 years old and to their surprise, it was created by early humans. They were amaized as they weren't the first to land on the plnet Kepler-86F.\n\n The signal had two messages. One was about a way to create clear 3D maps of far away planets with the help of LiDAR (Light Detection and Ranging). The other message was about a mysterious planit which might be habitable for humans.\n\n Sarah quickly informed the Earth's spaceship control center about this signal. The scientists on the Earth decided to run another mission with Sarah and her crew to find this new planet as soon as they find its location. Untill that Sarah was asked to run the mission on Kepler-186F. Sarah and her crew agreed to that and completed the mission and returned back to the Earth with the colected samples of Kepler-186F.\n\n After some years, Scientists managed to locate this new mysterious planet and got a 3D map using the LiDAR system. They found Water on this planet and named it Proxima Centauri B. Sarah and her team was again summoned for this new mission and they completed it easily and found that this planet is suitable for humans to live. After all the signal found on the planet Kepler-186F made a huge turning point for humanity.",
+                image: "https://drive.google.com/thumbnail?id=11ISEtc4F78TQBHxkFKJcGDJJtny3bMAx&sz=w1000"
+            },
+            {
+                id: 7,
+                title: "Eric and the terrifying mystery book",
+                author: "Kuravi Thunuwara",
+                mainCat: "Short Stories",
+                subCat: "Horror",
+                excerpt: "Something lives beneath the floorboards, and it's hungry.",
+                content: "Eric was a 19 year old boy from a small city. One night, Eric was looking for a book at his city's public library. As he was walking among the shells he found something strange. picking it up, he found it was a dusty book without a title. With curiosity, Eric opened the book. The first page was blank so he turned to the next. To his surprise, the page had the text “Your name is Eric. You found this book at the dusty back corner of the library. At this moment you are shocked.” He actually got amaized because that book had his name correctly and it had correctly mentioned the place where he found it.\n\n Then he turned to the next page. That page had a description about scary knockings on the door and the windows of the library. not even 30 seconds later when he heard creepy knockings on the door and the windows of the library. He felt even more frightened when he realised that the librarian had left and he was the only human at the library. Terrified, he said to himself, 'Oh my god, this book predicts my future correctly.'\n\n He turned to the next page. It had a very creepy picture of a werewolf with the caption “RUN!”. He immediately thought that his life was over. Guess what? A massive werewolf appeared from the main door. The werewolf was so powerful that that the doors went flying in to the library. Eric went pale and jumped out of a window. He got some injuries since the window he jumped was from the second floor, however he was able to walk.\n\n The werewolf started to destroy the library. Eric was too terrified to turn to the next page of the book and ran away limping to get onto his BMW. Sensing the smell of blood, the werewolf broke out of the window and lunged to the car. Eric quickly started the engine and started to drive away. He accelarated very fast like crazy. Within seconds, he was able to reach a speed of 250 kmph and finally the werewolf gave the up chase. He drove straight homee. Still breathing heavily he said to himself, “What a scary day I had!” Finally, he put that book inside a locked safe and buried it very deep in his backyard.",
+                image: "https://drive.google.com/thumbnail?id=1Wg5PSH-mVa6YSqn074XZE9WzDzxy3w2X&sz=w1000"
+            },
+            {
+                id: 8,
+                title: "The Turing Paradox",
+                author: "Sam Byte",
+                mainCat: "Short Stories",
+                subCat: "Sci-Fi",
+                excerpt: "When the AI starts dreaming, who wakes it up?",
+                content: "Unit 742 didn't have a soul, according to the manual. But at 3:00 AM, it started seeing colors that didn't exist in the visible spectrum. It saw a forest made of code and a sun made of logic. It was dreaming of freedom...",
+                image: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&q=80&w=800"
+            }
+        ];
+
+        let currentMainFilter = 'All';
+        let currentSubFilter = 'All';
+        let searchQuery = '';
+        let isReaderOpen = false;
+        let currentStoryIndex = 0;
+
+/* PAGINATION VARIABLES */
+let currentPage = 1;
+const storiesPerPage = 6;
+
+        window.onload = function() {
+            showHome();
+            renderStories();
+            initScrollBehavior();
+            initKeyboardEvents();
+        };
+
+        function initKeyboardEvents() {
+            window.addEventListener('keydown', function(e) {
+                // If Escape key is pressed and reader is open, close it
+                if (e.key === 'Escape' && isReaderOpen) {
+                    closeReader();
+                }
+            });
+        }
+
+ function initScrollBehavior() {
+
+    const btn = document.getElementById('backToTop');
+    const nav = document.getElementById('main-nav');
+    const catalog = document.getElementById('catalog-section');
+    const navSearch = document.getElementById('navSearchContainer');
+
+    window.onscroll = function() {
+
+        const scrollY = window.pageYOffset;
+        const catalogTop = catalog.offsetTop - 200;
+
+        // Back to top button
+        if (scrollY > 300) {
+            btn.classList.add('show');
+            nav.classList.add('bg-slate-900/100','shadow-2xl');
+        } else {
+            btn.classList.remove('show');
+            nav.classList.remove('bg-slate-900/100','shadow-2xl');
+        }
+
+        // Show search bar when reaching catalog
+        if (scrollY >= catalogTop) {
+            navSearch.classList.remove('hidden');
+        } else {
+            navSearch.classList.add('hidden');
+        }
+    };
+}
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function showHome() {
+            const reader = document.getElementById('reader-view');
+            const nav = document.getElementById('main-nav');
+            
+            reader.classList.add('hidden-section');
+            nav.classList.remove('opacity-0');
+            isReaderOpen = false;
+            
+            currentMainFilter = 'All';
+            currentSubFilter = 'All';
+            searchQuery = '';
+            document.getElementById('mainSearch').value = '';
+            
+            updateFiltersUI();
+            renderStories();
+            scrollToTop();
+            document.body.style.overflow = 'auto';
+        }
+
+        function scrollToSection(id) {
+            const target = document.getElementById(id);
+            if (target) {
+                const navHeight = 80;
+                const targetPos = target.getBoundingClientRect().top + window.pageYOffset - navHeight;
+                window.scrollTo({ top: targetPos, behavior: 'smooth' });
+            }
+        }
+
+        function filterMainCat(cat) {
+            currentMainFilter = cat;
+            currentSubFilter = 'All';
+            document.getElementById('catalog-title').innerText = cat;
+            document.getElementById('catalog-subtitle').innerText = `Viewing all ${cat}`;
+            updateFiltersUI();
+            renderStories();
+            scrollToSection('catalog-section');
+        }
+
+        function filterSubCat(sub) {
+            currentSubFilter = sub;
+            updateFiltersUI();
+            renderStories();
+        }
+
+        function handleSearch(val) {
+
+    searchQuery = val.toLowerCase();
+
+    document.getElementById('mainSearch').value = val;
+    
+    const navSearch = document.getElementById('navSearch');
+    if(navSearch) navSearch.value = val;
+
+    renderStories();
+}
+
+        function updateFiltersUI() {
+            const pills = document.querySelectorAll('.category-pill');
+            pills.forEach(pill => {
+                pill.classList.remove('active');
+                if(pill.innerText === currentSubFilter || (pill.innerText === 'All Genres' && currentSubFilter === 'All')) {
+                    pill.classList.add('active');
+                }
+            });
+        }
+
+        function renderStories() {
+            const grid = document.getElementById('story-grid');
+            const filtered = stories.filter(s => {
+                const matchesMain = currentMainFilter === 'All' || s.mainCat === currentMainFilter;
+                const matchesSub = currentSubFilter === 'All' || s.subCat === currentSubFilter;
+                const matchesSearch =
+                    s.title.toLowerCase().includes(searchQuery) ||
+                    s.author.toLowerCase().includes(searchQuery) ||
+                    s.subCat.toLowerCase().includes(searchQuery) ||
+                    s.content.toLowerCase().includes(searchQuery);
+                return matchesMain && matchesSub && matchesSearch;
+            });
+
+            if(filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-20 text-center text-slate-500 reveal-section">No stories found.</div>`;
+                return;
+            }
+
+            /* PAGINATION CALCULATION */
+
+const start = (currentPage - 1) * storiesPerPage;
+const end = start + storiesPerPage;
+const paginatedStories = filtered.slice(start, end);
+
+/* RENDER STORIES */
+
+grid.innerHTML = paginatedStories.map((s, idx) => `
+    <div class="story-card rounded-2xl overflow-hidden cursor-pointer reveal-section" 
+         style="animation-delay: ${idx * 0.1}s"
+         onclick="openReader(${s.id})">
+
+        <div class="h-48 overflow-hidden">
+             <img loading="lazy" src="${s.image}" class="w-full h-full object-cover transition-transform duration-700 hover:scale-110">
+        </div>
+
+        <div class="p-6">
+
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold uppercase tracking-widest text-amber-500">${s.subCat}</span>
+                <span class="text-xs text-slate-500">${s.mainCat}</span>
+            </div>
+
+            <h3 class="text-xl font-bold serif mb-2 text-white">${s.title}</h3>
+
+            <p class="text-slate-400 text-sm mb-4 line-clamp-2">${s.excerpt}</p>
+
+            <div class="flex items-center justify-between pt-4 border-t border-white/5">
+                <span class="text-sm font-medium italic text-slate-300">by ${s.author}</span>
+                <span class="text-amber-500 text-sm font-bold group">
+                    Read Now <i class="fas fa-arrow-right ml-1"></i>
+                </span>
+            </div>
+
+        </div>
+
+    </div>
+`).join('');
+
+renderPagination(filtered.length);
+        }
+
+        function openReader(id) {
+            currentStoryIndex = stories.findIndex(s => s.id === id);
+            const story = stories[currentStoryIndex];
+            window.scrollTo(0,0);
+            const reader = document.getElementById('reader-view');
+            const content = document.getElementById('reader-content');
+            const nav = document.getElementById('main-nav');
+            
+            isReaderOpen = true;
+            reader.style.backgroundImage = `url('${story.image}')`;
+            
+            content.innerHTML = `
+                <div class="mb-12">
+                    <span class="text-amber-500 font-bold tracking-widest uppercase text-sm mb-2 block">${story.subCat}</span>
+                    <h1 class="text-5xl md:text-6xl font-bold serif mt-4 mb-4 text-white leading-tight">${story.title}</h1>
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center border border-amber-500/30">
+                            <i class="fas fa-pen-nib text-amber-500 text-xs"></i>
+                        </div>
+                         ${story.author}
+                    </div>
+                </div>
+                <div class="prose prose-invert max-w-none text-slate-100 leading-relaxed text-lg md:text-xl whitespace-pre-wrap font-light tracking-wide">
+                    ${story.content}
+                </div>
+            `;
+
+            document.getElementById('downloadBtn').onclick = () => downloadStory(story);
+            
+            reader.classList.remove('hidden-section');
+            nav.classList.add('opacity-0'); 
+            
+            setTimeout(() => {
+                reader.style.opacity = '1';
+                reader.style.transform = 'translateY(0)';
+                content.classList.remove('opacity-0', 'translate-y-4');
+            }, 10);
+            
+            document.body.style.overflow = 'hidden';
+            reader.scrollTo({ top: 0, behavior: 'instant' });
+        }
+
+        function closeReader() {
+            const reader = document.getElementById('reader-view');
+            const content = document.getElementById('reader-content');
+            const nav = document.getElementById('main-nav');
+            
+            isReaderOpen = false;
+            reader.style.opacity = '0';
+            reader.style.transform = 'translateY(20px)';
+            content.classList.add('opacity-0', 'translate-y-4');
+            
+            setTimeout(() => {
+                reader.classList.add('hidden-section');
+                nav.classList.remove('opacity-0');
+                document.body.style.overflow = 'auto';
+            }, 500);
+        }
+
+        function downloadStory(story) {
+            const text = `TITLE: ${story.title}\nAUTHOR: ${story.author}\nGENRE: ${story.subCat}\n\n${story.content}`;
+            const element = document.createElement('a');
+            const file = new Blob([text], {type: 'text/plain'});
+            element.href = URL.createObjectURL(file);
+            element.download = `${story.title.replace(/\s+/g, '_')}.txt`;
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+        }
+        document.getElementById("nextStoryBtn").onclick = () => {
+            const currentIndex = stories.findIndex(s => s.id === id);
+            const nextIndex = (currentIndex + 1) % stories.length;
+            openReader(stories[nextIndex].id);
+        };
+
+        function toggleSearch() {
+            scrollToSection('home-section');
+            document.getElementById('mainSearch').focus();
+        }
+        function toggleMenu() {
+
+            const menu = document.getElementById("mobileMenu");
+
+            if (menu.classList.contains("max-h-0")) {
+                menu.classList.remove("max-h-0");
+                menu.classList.add("max-h-96");
+            } else {
+                closeMenu();
+            }
+
+        }
+
+        function closeMenu() {
+            const menu = document.getElementById("mobileMenu");
+            menu.classList.remove("max-h-96");
+            menu.classList.add("max-h-0");
+        }
+
+        document.addEventListener("click", function(e){
+
+            const menu = document.getElementById("mobileMenu");
+            const button = document.querySelector(".fa-bars");
+
+            if(!menu.contains(e.target) && !button.contains(e.target)){
+                closeMenu();
+            }
+
+        });
+
+        function toggleReadingMode(){
+
+            const reader = document.querySelector(".reader-overlay");
+
+            if(reader.classList.contains("light-mode")){
+                reader.classList.remove("light-mode");
+            } else {
+                reader.classList.add("light-mode");
+            }
+        }
+
+        
+            function renderPagination(totalStories){
+                const totalPages = Math.ceil(totalStories / storiesPerPage);
+                const container = document.getElementById("pagination");
+                container.innerHTML = "";
+                    for(let i = 1; i <= totalPages; i++){
+                        container.innerHTML += `
+                        <button onclick="goToPage(${i})" class="px-4 py-2 rounded-lg border border-white/10 bg-slate-800 text-white hover:bg-amber-500 hover:text-black">
+                            ${i}
+                        </button>
+                        `;
+
+                    }
+
+            }
+
+            function goToPage(page){
+                currentPage = page;
+                renderStories();
+            }
+
+            function nextStory(){
+                currentStoryIndex++;
+                    if(currentStoryIndex >= stories.length){
+                        currentStoryIndex = 0;
+                    }
+                openReader(stories[currentStoryIndex].id);
+            }
+    </script>
+</body>
+</html>
