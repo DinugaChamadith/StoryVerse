@@ -149,6 +149,21 @@
 </head>
 <body class="min-h-screen">
 
+    <div id="newStoryAlert"
+style="position:fixed;
+top:90px;
+right:20px;
+background:#0f172a;
+border:1px solid #f59e0b;
+color:white;
+padding:15px 20px;
+border-radius:12px;
+display:none;
+z-index:999;
+box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+🔥 New story added! Check the library.
+</div>
+
     <!-- Back to Top Button -->
     <button id="backToTop" onclick="scrollToTop()" class="fixed bottom-20 right-8 z-[60] bg-amber-500 text-slate-900 w-12 h-12 rounded-full shadow-2xl flex items-center justify-center hover:bg-amber-400 hover:-translate-y-1 active:scale-95">
         <i class="fas fa-chevron-up"></i>
@@ -551,6 +566,7 @@ const storiesPerPage = 6;
             renderStories();
             initScrollBehavior();
             initKeyboardEvents();
+            checkForNewStories();
         };
 
         function initKeyboardEvents() {
@@ -871,6 +887,26 @@ renderPagination(filtered.length);
                     }
                 openReader(stories[currentStoryIndex].id);
             }
+
+            function checkForNewStories(){
+
+    const totalStories = stories.length;
+
+    const savedStories = localStorage.getItem("storyCount");
+
+    if(savedStories === null){
+        localStorage.setItem("storyCount", totalStories);
+        return;
+    }
+
+    if(totalStories > savedStories){
+
+        document.getElementById("newStoryAlert").style.display = "block";
+
+        localStorage.setItem("storyCount", totalStories);
+    }
+
+}
     </script>
 </body>
 </html>
