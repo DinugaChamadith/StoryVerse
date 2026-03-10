@@ -4,6 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <script>
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDVKDDrfueG2PDUkCDxW5ox55FaRSddMoQ",
+    authDomain: "storyversecomments.firebaseapp.com",
+    projectId: "storyversecomments",
+    storageBucket: "storyversecomments.firebasestorage.app",
+    messagingSenderId: "199497557432",
+    appId: "1:199497557432:web:9ba4b37b799f6cf25b5b4d",
+    measurementId: "G-59VRHHYD6X"
+  };
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+</script>
+
     <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-DLGGJK6T71"></script>
 <script>
@@ -155,6 +175,38 @@
 
 .story-card:hover {
     box-shadow: 0 20px 30px -5px rgba(212, 175, 55, 0.5);
+}
+
+/* Author Modal Animation */
+.author-modal-bg{
+    animation: fadeModal 0.35s ease forwards;
+}
+
+.author-modal-box{
+    animation: scaleModal 0.35s ease forwards;
+}
+
+@keyframes fadeModal{
+    from{
+        opacity:0;
+    }
+    to{
+        opacity:1;
+    }
+}
+
+@keyframes scaleModal{
+    from{
+        opacity:0;
+        transform:scale(0.8) translateY(20px);
+    }
+    to{
+        opacity:1;
+        transform:scale(1) translateY(0);
+    }
+}
+.story-card:active{
+    transform: scale(0.95);
 }
     </style>
 </head>
@@ -394,6 +446,32 @@ box-shadow:0 10px 30px rgba(0,0,0,0.5);">
                 <div id="reader-content" class="opacity-0 translate-y-4 transition-all duration-700">
                     <!-- Content injected here -->
                 </div>
+
+                <div class="mt-16 border-t border-white/10 pt-10">
+
+<h3 class="text-2xl font-bold mb-6 text-amber-500">Comments</h3>
+
+<div id="comments-container" class="space-y-4 mb-6"></div>
+
+<input
+id="commentName"
+placeholder="Your name"
+class="bg-white/10 border border-white/20 px-4 py-2 rounded-lg w-full mb-3"
+/>
+
+<textarea
+id="commentText"
+placeholder="Write a comment..."
+class="bg-white/10 border border-white/20 px-4 py-5 rounded-lg w-full mb-3"
+></textarea>
+
+<button
+onclick="sendComment()"
+class="bg-amber-500 text-black px-6 py-2 rounded-lg">
+Post Comment
+</button>
+
+</div>
 
                 <div class="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
 
@@ -749,8 +827,14 @@ renderPagination(filtered.length);
         }
 
         function openReader(id) {
-            currentStoryIndex = stories.findIndex(s => s.id === id);
-            const story = stories[currentStoryIndex];
+
+    currentStoryIndex = stories.findIndex(s => s.id === id);
+    const story = stories[currentStoryIndex];
+
+    if(!story) return;
+
+    activeStoryId = story.id;
+    loadComments(story.id);
             window.scrollTo(0,0);
             const reader = document.getElementById('reader-view');
             const content = document.getElementById('reader-content');
@@ -817,11 +901,7 @@ renderPagination(filtered.length);
             element.click();
             document.body.removeChild(element);
         }
-        document.getElementById("nextStoryBtn").onclick = () => {
-            const currentIndex = stories.findIndex(s => s.id === id);
-            const nextIndex = (currentIndex + 1) % stories.length;
-            openReader(stories[nextIndex].id);
-        };
+        
 
         function toggleSearch() {
             scrollToSection('home-section');
@@ -919,7 +999,7 @@ renderPagination(filtered.length);
   const modalContent = {
     kuravi: {
       name: "Kuravi Thunuwara",
-      bio: "Author of multiple adventure, mystery and science fiction short stories featured on StoryVerse.",
+      bio: "I’m Kuravi Thunuwara, a writer who enjoys creating short stories, especially in adventure, mystery, and science fiction. I enjoy turning simple ideas into engaging stories and exploring new worlds through writing, aiming to entertain readers and inspire their imagination.",
       image: ""
     },
     sasiru: {
@@ -938,8 +1018,8 @@ renderPagination(filtered.length);
   if (!author) return;
 
   const modalHTML = `
-    <div id="authorModal" class="fixed inset-0 z-[120] flex items-center justify-center bg-black/70">
-      <div class="bg-slate-900 p-8 rounded-2xl max-w-md text-center relative">
+    <div id="authorModal" class="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 author-modal-bg">
+      <div class="bg-slate-900 p-8 rounded-2xl max-w-md text-center relative author-modal-box">
         <button onclick="closeAuthorModal()" class="absolute top-4 right-4 text-white text-xl">&times;</button>
         <img src="${author.image}" class="w-24 h-24 rounded-full mx-auto mb-4" />
         <h3 class="text-xl font-bold text-amber-500 mb-2">${author.name}</h3>
@@ -956,6 +1036,77 @@ function closeAuthorModal() {
   if (modal) modal.remove();
 }
 
+let activeStoryId = null;
+
+function sendComment(){
+
+const name = document.getElementById("commentName").value;
+const text = document.getElementById("commentText").value;
+
+if(!name || !text){
+alert("Please fill all fields");
+return;
+}
+
+db.collection("comments").add({
+storyId: activeStoryId,
+name: name,
+text: text,
+time: Date.now()
+}).then(()=>{
+
+document.getElementById("commentText").value="";
+loadComments(activeStoryId);
+
+}).catch(err=>{
+console.error(err);
+alert("Failed to post comment");
+});
+
+
+}
+
+function loadComments(storyId){
+
+const container = document.getElementById("comments-container");
+
+db.collection("comments")
+.where("storyId","==",storyId)
+.orderBy("time","desc")
+.get()
+.then(snapshot=>{
+
+if(snapshot.empty){
+container.innerHTML = "<p class='text-slate-400'>No comments yet.</p>";
+return;
+}
+
+container.innerHTML = "";
+
+snapshot.forEach(doc=>{
+
+const c = doc.data();
+
+container.innerHTML += `
+<div class="bg-slate-800 p-3 rounded-lg">
+<b class="text-amber-500">${c.name}</b>
+<p class="text-slate-300 text-sm">${c.text}</p>
+</div>
+`;
+
+});
+
+});
+
+}
+// --- ADDED: ENTER KEY TO SUBMIT COMMENT ---
+        document.getElementById("commentText").addEventListener("keydown", function(e) {
+            // Check if Enter is pressed without Shift
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault(); // Prevent adding a new line
+                sendComment();      // Call the existing function
+            }
+        });
     </script>
 </body>
 </html>
