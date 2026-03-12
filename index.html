@@ -208,6 +208,66 @@ const db = firebase.firestore();
 .story-card:active{
     transform: scale(0.95);
 }
+
+/* Author modal background fade */
+.author-modal-bg{
+    animation: fadeModal 0.35s ease forwards;
+}
+
+/* Modal zoom animation */
+.author-modal-box{
+    animation: zoomModal 0.35s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* Icon animation */
+.author-icon{
+    transition: transform 0.4s ease;
+}
+
+.author-modal-box:hover .author-icon{
+    transform: scale(1.2) rotate(10deg);
+}
+
+@keyframes fadeModal{
+    from{opacity:0;}
+    to{opacity:1;}
+}
+
+@keyframes zoomModal{
+    from{
+        opacity:0;
+        transform:scale(0.7) translateY(40px);
+    }
+    to{
+        opacity:1;
+        transform:scale(1) translateY(0);
+    }
+}
+
+.story-card{
+transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.story-card:hover{
+transform: translateY(-8px) scale(1.03);
+box-shadow:0 20px 40px rgba(0,0,0,0.5);
+}
+
+/* closing animation */
+.author-modal-closing{
+    animation: closeModal 0.3s ease forwards;
+}
+
+@keyframes closeModal{
+    from{
+        opacity:1;
+        transform:scale(1) translateY(0);
+    }
+    to{
+        opacity:0;
+        transform:scale(0.8) translateY(20px);
+    }
+}
     </style>
 </head>
 <body class="min-h-screen">
@@ -558,14 +618,33 @@ Post Comment
 
             <div class="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
                 <p class="text-slate-500 text-sm italic serif text-white">Crafting digital experiences for modern readers.</p>
-                <p class="text-slate-500 text-sm text-white">&copy; 2026 StoryVerse Media Group. All rights reserved.</p>
+                <p class="text-slate-500 text-sm text-white">&copy; <span id="year"></span> StoryVerse Media Group. All rights reserved.</p>
             </div>
         </div>
     </footer>
 
     <script>
         const stories = [
-            
+            {
+                id: 9,
+                title: "The mystery of the haunted hotel",
+                author: "Kuravi Thunuwara",
+                mainCat: "Short Stories",
+                subCat: "Horror",
+                excerpt: "Something lives beneath the floorboards, and it's hungry.",
+                content: "",
+                image: "https://drive.google.com/thumbnail?id=1DJySaCila2nNuppyIDa0ziJu55r5kbcV&sz=w1000"
+            },
+            {
+                id: 8,
+                title: "A true companion",
+                author: "Sasiru Dulmith",
+                mainCat: "Short Stories",
+                subCat: "Horror",
+                excerpt: "Something lives beneath the floorboards, and it's hungry.",
+                content: "",
+                image: "https://drive.google.com/thumbnail?id=1-RE-29x2_2vdxN0tpQluylxmLCR2ch5M&sz=w1000"
+            },
             {
                 id: 7,
                 title: "Eric and the terrifying mystery book",
@@ -654,6 +733,7 @@ const storiesPerPage = 6;
             initScrollBehavior();
             initKeyboardEvents();
             checkForNewStories();
+            document.getElementById("year").textContent = new Date().getFullYear();
         };
 
         function initKeyboardEvents() {
@@ -1011,22 +1091,24 @@ renderPagination(filtered.length);
         localStorage.setItem("storyCount", totalStories);
     }
 
-}function openAuthorModal(authorId) {
+}
+
+function openAuthorModal(authorId) {
   const modalContent = {
     kuravi: {
       name: "Kuravi Thunuwara",
       bio: "I’m Kuravi Thunuwara, a writer who enjoys creating short stories, especially in adventure, mystery, and science fiction. I enjoy turning simple ideas into engaging stories and exploring new worlds through writing, aiming to entertain readers and inspire their imagination.",
-      image: ""
+      icon: "fas fa-pen-nib"
     },
     sasiru: {
       name: "Sasiru Dulmith",
       bio: "An editor and creative partner dedicated to refining our story...",
-      image: ""
+      icon: "fas fa-ghost"
     },
     nisira: {
       name: "Nisira Nimsara",
       bio: "Author of multiple adventure, mystery and science fiction short stories featured on StoryVerse.",
-      image: ""
+      icon: "fas fa-gear"
     },
   };
 
@@ -1037,7 +1119,13 @@ renderPagination(filtered.length);
     <div id="authorModal" class="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 author-modal-bg">
       <div class="bg-slate-900 p-8 rounded-2xl max-w-md text-center relative author-modal-box">
         <button onclick="closeAuthorModal()" class="absolute top-4 right-4 text-white text-xl">&times;</button>
-        <img src="${author.image}" class="w-24 h-24 rounded-full mx-auto mb-4" />
+        <div class="w-24 h-24 mx-auto mb-5 flex items-center justify-center 
+rounded-full bg-amber-500/20 border-2 border-amber-500 
+text-amber-500 text-3xl shadow-lg author-icon">
+
+<i class="${author.icon}"></i>
+
+</div>
         <h3 class="text-xl font-bold text-amber-500 mb-2">${author.name}</h3>
         <p class="text-slate-300">${author.bio}</p>
       </div>
@@ -1047,9 +1135,20 @@ renderPagination(filtered.length);
   document.body.insertAdjacentHTML('beforeend', modalHTML);
 }
 
-function closeAuthorModal() {
-  const modal = document.getElementById('authorModal');
-  if (modal) modal.remove();
+function closeAuthorModal(){
+
+const modal = document.getElementById("authorModal");
+
+if(!modal) return;
+
+const box = modal.querySelector(".author-modal-box");
+
+box.classList.add("author-modal-closing");
+
+setTimeout(()=>{
+modal.remove();
+},300);
+
 }
 
 let activeStoryId = null;
@@ -1123,6 +1222,30 @@ container.innerHTML += `
                 sendComment();      // Call the existing function
             }
         });
+
+        document.addEventListener("click", function(e){
+
+const modal = document.getElementById("authorModal");
+
+if(modal && e.target === modal){
+closeAuthorModal();
+}
+
+});
+
+document.addEventListener("keydown", function(e){
+
+if(e.key === "Escape"){
+
+const modal = document.getElementById("authorModal");
+
+if(modal){
+closeAuthorModal();
+}
+
+}
+
+});
     </script>
 </body>
 </html>
